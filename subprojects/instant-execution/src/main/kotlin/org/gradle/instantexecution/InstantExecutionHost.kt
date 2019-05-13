@@ -155,7 +155,7 @@ class InstantExecutionHost internal constructor(
             }, buildOperationExecutor)
             buildLoader.load(gradle.settings, gradle)
 
-            //
+            // Fire build operation required by build scans to determine the root path
             buildOperationExecutor.run(object: RunnableBuildOperation {
                 override fun run(context: BuildOperationContext?) {
                 }
