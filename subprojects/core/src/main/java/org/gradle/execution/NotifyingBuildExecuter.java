@@ -23,7 +23,9 @@ import org.gradle.internal.operations.BuildOperationDescriptor;
 import org.gradle.internal.operations.BuildOperationExecutor;
 import org.gradle.internal.operations.RunnableBuildOperation;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class NotifyingBuildExecuter implements BuildExecuter {
     private final BuildExecuter delegate;
@@ -50,7 +52,12 @@ public class NotifyingBuildExecuter implements BuildExecuter {
 
         @Override
         public void run(BuildOperationContext context) {
-            delegate.execute(gradle, taskFailures);
+            List<Throwable> failures = new ArrayList<Throwable>();
+            delegate.execute(gradle, failures);
+            if (!failures.isEmpty()) {
+                context.failed(failures.get(0));
+            }
+            taskFailures.addAll(failures);
         }
 
         @Override
