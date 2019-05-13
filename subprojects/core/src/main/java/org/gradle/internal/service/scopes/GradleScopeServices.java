@@ -168,7 +168,9 @@ public class GradleScopeServices extends DefaultServiceRegistry {
     }
 
     TaskExecutionPreparer createTaskExecutionPreparer(BuildConfigurationActionExecuter buildConfigurationActionExecuter, IncludedBuildControllers includedBuildControllers, BuildOperationExecutor buildOperationExecutor) {
-        return new NotifyingTaskExecutionPreparer(new DefaultTaskExecutionPreparer(buildConfigurationActionExecuter, includedBuildControllers), buildOperationExecutor);
+        return new NotifyingTaskExecutionPreparer(
+            new DefaultTaskExecutionPreparer(buildConfigurationActionExecuter, includedBuildControllers, buildOperationExecutor),
+            buildOperationExecutor);
     }
 
     ProjectFinder createProjectFinder(final BuildStateRegistry buildStateRegistry, final GradleInternal gradle) {

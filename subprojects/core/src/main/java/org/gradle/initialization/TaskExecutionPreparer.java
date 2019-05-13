@@ -20,6 +20,8 @@ import org.gradle.api.internal.GradleInternal;
 
 /**
  * Responsible for preparing `Gradle` instances for task execution, following configuration of the projects.
+ *
+ * <p>This includes resolving the entry tasks and calculating the task graph.</p>
  */
 public interface TaskExecutionPreparer {
     void prepareForTaskExecution(GradleInternal gradle);

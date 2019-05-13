@@ -44,8 +44,6 @@ public class DefaultGradleLauncher implements GradleLauncher {
 
     private static final ConfigureBuildBuildOperationType.Result CONFIGURE_BUILD_RESULT = new ConfigureBuildBuildOperationType.Result() {
     };
-    private static final NotifyProjectsEvaluatedBuildOperationType.Result PROJECTS_EVALUATED_RESULT = new NotifyProjectsEvaluatedBuildOperationType.Result() {
-    };
 
     private enum Stage {
         LoadSettings, Configure, TaskGraph, RunTasks() {
@@ -148,7 +146,7 @@ public class DefaultGradleLauncher implements GradleLauncher {
     }
 
     private void doClassicBuildStages(Stage upTo) {
-        loadSettings();
+        prepareSettings();
         if (upTo == Stage.LoadSettings) {
             return;
         }
@@ -156,7 +154,7 @@ public class DefaultGradleLauncher implements GradleLauncher {
         if (upTo == Stage.Configure) {
             return;
         }
-        constructTaskGraph();
+        prepareTaskExecution();
         if (upTo == Stage.TaskGraph) {
             return;
         }
@@ -199,7 +197,7 @@ public class DefaultGradleLauncher implements GradleLauncher {
         }
     }
 
-    private void loadSettings() {
+    private void prepareSettings() {
         if (stage == null) {
             buildListener.buildStarted(gradle);
 
@@ -217,7 +215,7 @@ public class DefaultGradleLauncher implements GradleLauncher {
         }
     }
 
-    private void constructTaskGraph() {
+    private void prepareTaskExecution() {
         if (stage == Stage.Configure) {
             taskExecutionPreparer.prepareForTaskExecution(gradle);
 
@@ -278,7 +276,9 @@ public class DefaultGradleLauncher implements GradleLauncher {
             buildLoader.load(gradle.getSettings(), gradle);
             buildConfigurer.configure(gradle);
 
-            projectsEvaluated();
+            if (!gradle.getStartParameter().isConfigureOnDemand()) {
+                new ProjectsEvaluatedNotifier(buildOperationExecutor).notify(gradle);
+            }
 
             modelConfigurationListener.onConfigure(gradle);
             context.setResult(CONFIGURE_BUILD_RESULT);
@@ -325,29 +325,5 @@ public class DefaultGradleLauncher implements GradleLauncher {
             builder.totalProgress(gradle.getTaskGraph().size());
             return builder;
         }
-    }
-
-    private class NotifyProjectsEvaluatedListeners implements RunnableBuildOperation {
-
-        @Override
-        public void run(BuildOperationContext context) {
-            buildListener.projectsEvaluated(gradle);
-            context.setResult(PROJECTS_EVALUATED_RESULT);
-        }
-
-        @Override
-        public BuildOperationDescriptor.Builder description() {
-            return BuildOperationDescriptor.displayName(gradle.contextualize("Notify projectsEvaluated listeners"))
-                .details(new NotifyProjectsEvaluatedBuildOperationType.Details() {
-                    @Override
-                    public String getBuildPath() {
-                        return gradle.getIdentityPath().toString();
-                    }
-                });
-        }
-    }
-
-    private void projectsEvaluated() {
-        buildOperationExecutor.run(new NotifyProjectsEvaluatedListeners());
     }
 }

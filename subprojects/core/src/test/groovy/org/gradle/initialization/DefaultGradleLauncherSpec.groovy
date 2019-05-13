@@ -28,7 +28,6 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.internal.project.ProjectRegistry
 import org.gradle.composite.internal.IncludedBuildControllers
 import org.gradle.configuration.BuildConfigurer
-import org.gradle.execution.BuildConfigurationActionExecuter
 import org.gradle.execution.BuildExecuter
 import org.gradle.execution.MultipleBuildFailures
 import org.gradle.execution.taskgraph.TaskExecutionGraphInternal
@@ -57,7 +56,6 @@ class DefaultGradleLauncherSpec extends Specification {
     def buildConfigurerMock = Mock(BuildConfigurer)
     def buildBroadcaster = Mock(BuildListener)
     def buildExecuter = Mock(BuildExecuter)
-    def buildConfigurationActionExecuter = Mock(BuildConfigurationActionExecuter.class)
     def buildScopeServices = Mock(ServiceRegistry)
     def cacheAccess = Mock(ExecutionHistoryCacheAccess)
 
@@ -120,6 +118,7 @@ class DefaultGradleLauncherSpec extends Specification {
         _ * gradleMock.includedBuilds >> []
         _ * gradleMock.getBuildOperation() >> null
         _ * gradleMock.settings >> settingsMock
+        _ * gradleMock.buildListenerBroadcaster >> buildBroadcaster
 
         buildScopeServices.get(ExecutionHistoryCacheAccess) >> cacheAccess
         buildScopeServices.get(IncludedBuildControllers) >> includedBuildControllers

@@ -20,14 +20,17 @@ import org.gradle.api.internal.GradleInternal;
 import org.gradle.composite.internal.IncludedBuildControllers;
 import org.gradle.execution.BuildConfigurationActionExecuter;
 import org.gradle.execution.taskgraph.TaskExecutionGraphInternal;
+import org.gradle.internal.operations.BuildOperationExecutor;
 
 public class DefaultTaskExecutionPreparer implements TaskExecutionPreparer {
+    private final BuildOperationExecutor buildOperationExecutor;
     private final BuildConfigurationActionExecuter buildConfigurationActionExecuter;
     private final IncludedBuildControllers includedBuildControllers;
 
-    public DefaultTaskExecutionPreparer(BuildConfigurationActionExecuter buildConfigurationActionExecuter, IncludedBuildControllers includedBuildControllers) {
+    public DefaultTaskExecutionPreparer(BuildConfigurationActionExecuter buildConfigurationActionExecuter, IncludedBuildControllers includedBuildControllers, BuildOperationExecutor buildOperationExecutor) {
         this.buildConfigurationActionExecuter = buildConfigurationActionExecuter;
         this.includedBuildControllers = includedBuildControllers;
+        this.buildOperationExecutor = buildOperationExecutor;
     }
 
     @Override
@@ -38,5 +41,9 @@ public class DefaultTaskExecutionPreparer implements TaskExecutionPreparer {
         taskGraph.populate();
 
         includedBuildControllers.populateTaskGraphs();
+
+        if (gradle.getStartParameter().isConfigureOnDemand()) {
+            new ProjectsEvaluatedNotifier(buildOperationExecutor).notify(gradle);
+        }
     }
 }
