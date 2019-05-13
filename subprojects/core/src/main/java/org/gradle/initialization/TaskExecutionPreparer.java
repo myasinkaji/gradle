@@ -19,10 +19,8 @@ package org.gradle.initialization;
 import org.gradle.api.internal.GradleInternal;
 
 /**
- * Responsible creating and configuring the `Settings` object for a newly created `Gradle` instance, ready to load the projects.
- *
- * <p>This includes running the init scripts and settings script.</p>
+ * Responsible for preparing `Gradle` instances for task execution, following configuration of the projects.
  */
-public interface SettingsPreparer {
-    void prepareSettings(GradleInternal gradle);
+public interface TaskExecutionPreparer {
+    void prepareForTaskExecution(GradleInternal gradle);
 }
