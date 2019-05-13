@@ -35,7 +35,6 @@ import org.gradle.api.artifacts.dsl.DependencyLockingHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.attributes.AttributesSchema
 import org.gradle.api.component.SoftwareComponentContainer
-import org.gradle.api.initialization.dsl.ScriptHandler
 import org.gradle.api.internal.CollectionCallbackActionDecorator
 import org.gradle.api.internal.FactoryNamedDomainObjectContainer
 import org.gradle.api.internal.GradleInternal
@@ -51,6 +50,7 @@ import org.gradle.api.internal.file.TestFiles
 import org.gradle.api.internal.initialization.ClassLoaderScope
 import org.gradle.api.internal.initialization.RootClassLoaderScope
 import org.gradle.api.internal.initialization.ScriptHandlerFactory
+import org.gradle.api.internal.initialization.ScriptHandlerInternal
 import org.gradle.api.internal.initialization.loadercache.DummyClassLoaderCache
 import org.gradle.api.internal.plugins.PluginManagerInternal
 import org.gradle.api.internal.project.ant.AntLoggingAdapter
@@ -91,9 +91,10 @@ import org.gradle.util.TestClosure
 import org.gradle.util.TestUtil
 import org.junit.Rule
 
-import java.awt.Point
+import java.awt.*
 import java.lang.reflect.Type
 import java.text.FieldPosition
+import java.util.List
 
 class DefaultProjectTest extends Specification {
 
@@ -127,7 +128,7 @@ class DefaultProjectTest extends Specification {
     RepositoryHandler repositoryHandlerMock = Stub(RepositoryHandler)
     DependencyHandler dependencyHandlerMock = Stub(DependencyHandler)
     ComponentMetadataHandler moduleHandlerMock = Stub(ComponentMetadataHandler)
-    ScriptHandler scriptHandlerMock = Mock(ScriptHandler)
+    ScriptHandlerInternal scriptHandlerMock = Mock(ScriptHandlerInternal)
     DependencyMetaDataProvider dependencyMetaDataProviderMock = Stub(DependencyMetaDataProvider)
     GradleInternal build = Stub(GradleInternal)
     ConfigurationTargetIdentifier configurationTargetIdentifier = Stub(ConfigurationTargetIdentifier)
@@ -187,7 +188,7 @@ class DefaultProjectTest extends Specification {
         serviceRegistryMock.get((Type) InputNormalizationHandler) >> inputNormalizationHandler
         serviceRegistryMock.get(ProjectEvaluator) >> projectEvaluator
         serviceRegistryMock.getFactory(AntBuilder) >> antBuilderFactoryMock
-        serviceRegistryMock.get((Type) ScriptHandler) >> scriptHandlerMock
+        serviceRegistryMock.get((Type) ScriptHandlerInternal) >> scriptHandlerMock
         serviceRegistryMock.get((Type) LoggingManagerInternal) >> loggingManagerMock
         serviceRegistryMock.get(projectRegistryType) >> projectRegistry
         serviceRegistryMock.get(DependencyMetaDataProvider) >> dependencyMetaDataProviderMock
