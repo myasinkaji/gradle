@@ -129,11 +129,9 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
         DeprecatedUsageBuildOperationProgressBroadaster deprecationWarningBuildOperationProgressBroadaster = serviceRegistry.get(DeprecatedUsageBuildOperationProgressBroadaster.class);
         DeprecationLogger.init(usageLocationReporter, startParameter.getWarningMode(), deprecationWarningBuildOperationProgressBroadaster);
 
-        SettingsLoaderFactory settingsLoaderFactory = serviceRegistry.get(SettingsLoaderFactory.class);
-        SettingsLoader settingsLoader = parent != null ? settingsLoaderFactory.forNestedBuild() : settingsLoaderFactory.forTopLevelBuild();
         GradleInternal parentBuild = parent == null ? null : parent.getGradle();
 
-        NotifyingSettingsPreparer settingsPreparer = new NotifyingSettingsPreparer(new DefaultSettingsPreparer(serviceRegistry.get(InitScriptHandler.class), settingsLoader), buildOperationExecutor, buildDefinition.getFromBuild());
+        SettingsPreparer settingsPreparer = serviceRegistry.get(SettingsPreparer.class);
 
         GradleInternal gradle = serviceRegistry.get(Instantiator.class).newInstance(DefaultGradle.class, parentBuild, startParameter, serviceRegistry.get(ServiceRegistryFactory.class));
 
