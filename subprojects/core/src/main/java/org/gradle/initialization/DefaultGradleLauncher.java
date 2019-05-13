@@ -28,11 +28,6 @@ import org.gradle.execution.BuildExecuter;
 import org.gradle.execution.MultipleBuildFailures;
 import org.gradle.initialization.exception.ExceptionAnalyser;
 import org.gradle.internal.concurrent.CompositeStoppable;
-import org.gradle.internal.operations.BuildOperationCategory;
-import org.gradle.internal.operations.BuildOperationContext;
-import org.gradle.internal.operations.BuildOperationDescriptor;
-import org.gradle.internal.operations.BuildOperationExecutor;
-import org.gradle.internal.operations.RunnableBuildOperation;
 import org.gradle.internal.service.scopes.BuildScopeServices;
 
 import javax.annotation.Nullable;
@@ -58,7 +53,6 @@ public class DefaultGradleLauncher implements GradleLauncher {
     private final ExceptionAnalyser exceptionAnalyser;
     private final BuildListener buildListener;
     private final BuildCompletionListener buildCompletionListener;
-    private final BuildOperationExecutor buildOperationExecutor;
     private final BuildExecuter buildExecuter;
     private final BuildScopeServices buildServices;
     private final List<?> servicesToStop;
@@ -72,7 +66,7 @@ public class DefaultGradleLauncher implements GradleLauncher {
 
     public DefaultGradleLauncher(GradleInternal gradle, BuildConfigurer buildConfigurer, ExceptionAnalyser exceptionAnalyser,
                                  BuildListener buildListener, BuildCompletionListener buildCompletionListener,
-                                 BuildOperationExecutor operationExecutor, BuildExecuter buildExecuter, BuildScopeServices buildServices,
+                                 BuildExecuter buildExecuter, BuildScopeServices buildServices,
                                  List<?> servicesToStop, IncludedBuildControllers includedBuildControllers,
                                  SettingsPreparer settingsPreparer, TaskExecutionPreparer taskExecutionPreparer,
                                  InstantExecution instantExecution) {
@@ -80,7 +74,6 @@ public class DefaultGradleLauncher implements GradleLauncher {
         this.buildConfigurer = buildConfigurer;
         this.exceptionAnalyser = exceptionAnalyser;
         this.buildListener = buildListener;
-        this.buildOperationExecutor = operationExecutor;
         this.buildExecuter = buildExecuter;
         this.buildCompletionListener = buildCompletionListener;
         this.buildServices = buildServices;
@@ -237,7 +230,11 @@ public class DefaultGradleLauncher implements GradleLauncher {
             throw new IllegalStateException("Cannot execute tasks: current stage = " + stage);
         }
 
-        buildOperationExecutor.run(new ExecuteTasks());
+        List<Throwable> taskFailures = new ArrayList<Throwable>();
+        buildExecuter.execute(gradle, taskFailures);
+        if (!taskFailures.isEmpty()) {
+            throw new MultipleBuildFailures(taskFailures);
+        }
 
         stage = Stage.RunTasks;
     }
@@ -258,31 +255,6 @@ public class DefaultGradleLauncher implements GradleLauncher {
             CompositeStoppable.stoppable(buildServices).add(servicesToStop).stop();
         } finally {
             buildCompletionListener.completed();
-        }
-    }
-
-    private class ExecuteTasks implements RunnableBuildOperation {
-        @Override
-        public void run(BuildOperationContext context) {
-            includedBuildControllers.startTaskExecution();
-            List<Throwable> taskFailures = new ArrayList<Throwable>();
-            buildExecuter.execute(gradle, taskFailures);
-            includedBuildControllers.awaitTaskCompletion(taskFailures);
-            if (!taskFailures.isEmpty()) {
-                throw new MultipleBuildFailures(taskFailures);
-            }
-        }
-
-        @Override
-        public BuildOperationDescriptor.Builder description() {
-            BuildOperationDescriptor.Builder builder = BuildOperationDescriptor.displayName(gradle.contextualize("Run tasks"));
-            if (gradle.getParent() == null) {
-                builder.operationType(BuildOperationCategory.RUN_WORK_ROOT_BUILD);
-            } else {
-                builder.operationType(BuildOperationCategory.RUN_WORK);
-            }
-            builder.totalProgress(gradle.getTaskGraph().size());
-            return builder;
         }
     }
 }
