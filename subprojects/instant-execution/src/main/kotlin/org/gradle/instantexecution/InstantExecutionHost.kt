@@ -103,6 +103,7 @@ class InstantExecutionHost internal constructor(
         gradle.startParameter.systemPropertiesArgs[propertyName]
 
     override val startParameter: StartParameter = gradle.startParameter
+
     inner class DefaultInstantExecutionBuild : InstantExecutionBuild {
 
         init {
@@ -156,7 +157,7 @@ class InstantExecutionHost internal constructor(
             buildLoader.load(gradle.settings, gradle)
 
             // Fire build operation required by build scans to determine the root path
-            buildOperationExecutor.run(object: RunnableBuildOperation {
+            buildOperationExecutor.run(object : RunnableBuildOperation {
                 override fun run(context: BuildOperationContext?) {
                 }
 
@@ -164,9 +165,9 @@ class InstantExecutionHost internal constructor(
                     val project = gradle.rootProject
                     val displayName = "Configure project " + project.identityPath
                     return BuildOperationDescriptor.displayName(displayName)
-                                            .operationType(BuildOperationCategory.CONFIGURE_PROJECT)
-                                            .progressDisplayName(displayName)
-                                            .details(ConfigureProjectBuildOperationType.DetailsImpl(project.projectPath, gradle.identityPath, project.rootDir))
+                        .operationType(BuildOperationCategory.CONFIGURE_PROJECT)
+                        .progressDisplayName(displayName)
+                        .details(ConfigureProjectBuildOperationType.DetailsImpl(project.projectPath, gradle.identityPath, project.rootDir))
                 }
             })
         }
