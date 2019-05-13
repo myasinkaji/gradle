@@ -51,7 +51,6 @@ import static org.gradle.util.Path.path
 class DefaultGradleLauncherSpec extends Specification {
     def settingsPreparerMock = Mock(SettingsPreparer)
     def taskExecutionPreparerMock = Mock(TaskExecutionPreparer)
-    def buildLoaderMock = Mock(BuildLoader)
     def taskGraphMock = Mock(TaskExecutionGraphInternal)
     def buildConfigurerMock = Mock(BuildConfigurer)
     def buildBroadcaster = Mock(BuildListener)
@@ -69,7 +68,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
     private ClassLoaderScope baseClassLoaderScope = Mock(ClassLoaderScope.class)
     private ExceptionAnalyser exceptionAnalyserMock = Mock(ExceptionAnalyser)
-    private ModelConfigurationListener modelListenerMock = Mock(ModelConfigurationListener.class)
     private BuildCompletionListener buildCompletionListener = Mock(BuildCompletionListener.class)
     private TestBuildOperationExecutor buildOperationExecutor = new TestBuildOperationExecutor()
     private ResourceLockCoordinationService coordinationService = new DefaultResourceLockCoordinationService()
@@ -122,7 +120,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
         buildScopeServices.get(ExecutionHistoryCacheAccess) >> cacheAccess
         buildScopeServices.get(IncludedBuildControllers) >> includedBuildControllers
-        buildScopeServices.get(InstantExecution) >> instantExecution
         buildServices.get(WorkerLeaseService) >> workerLeaseService
     }
 
@@ -131,10 +128,9 @@ class DefaultGradleLauncherSpec extends Specification {
     }
 
     DefaultGradleLauncher launcher() {
-        return new DefaultGradleLauncher(gradleMock, buildLoaderMock,
-            buildConfigurerMock, exceptionAnalyserMock, buildBroadcaster,
-            modelListenerMock, buildCompletionListener, buildOperationExecutor, buildExecuter,
-            buildServices, [otherService], includedBuildControllers, settingsPreparerMock, taskExecutionPreparerMock)
+        return new DefaultGradleLauncher(gradleMock, buildConfigurerMock, exceptionAnalyserMock, buildBroadcaster,
+            buildCompletionListener, buildOperationExecutor, buildExecuter, buildServices, [otherService], includedBuildControllers,
+            settingsPreparerMock, taskExecutionPreparerMock, instantExecution)
     }
 
     void testRunTasks() {
@@ -167,10 +163,8 @@ class DefaultGradleLauncherSpec extends Specification {
         result == gradleMock
 
         and:
-        assert buildOperationExecutor.operations.size() == 3
-        assert buildOperationExecutor.operations[0].displayName == "Configure build (:nested)"
-        assert buildOperationExecutor.operations[1].displayName == "Notify projectsEvaluated listeners (:nested)"
-        assert buildOperationExecutor.operations[2].displayName == "Run tasks (:nested)"
+        assert buildOperationExecutor.operations.size() == 1
+        assert buildOperationExecutor.operations[0].displayName == "Run tasks (:nested)"
     }
 
     void testGetBuildAnalysis() {
@@ -179,7 +173,6 @@ class DefaultGradleLauncherSpec extends Specification {
         expectSettingsBuilt()
         expectBuildListenerCallbacks()
 
-        1 * buildLoaderMock.load(settingsMock, gradleMock)
         1 * buildConfigurerMock.configure(gradleMock)
 
         DefaultGradleLauncher gradleLauncher = launcher()
@@ -256,8 +249,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
         and:
         1 * buildBroadcaster.buildStarted(gradleMock)
-        1 * buildBroadcaster.projectsEvaluated(gradleMock)
-        1 * modelListenerMock.onConfigure(gradleMock)
         1 * exceptionAnalyserMock.transform({ it instanceof MultipleBuildFailures && it.cause == failure }) >> transformedException
         1 * buildBroadcaster.buildFinished({ it.failure == transformedException })
 
@@ -281,8 +272,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
         and:
         1 * buildBroadcaster.buildStarted(gradleMock)
-        1 * buildBroadcaster.projectsEvaluated(gradleMock)
-        1 * modelListenerMock.onConfigure(gradleMock)
         1 * exceptionAnalyserMock.transform({ it instanceof MultipleBuildFailures && it.causes == [failure, failure2] }) >> transformedException
         1 * buildBroadcaster.buildFinished({ it.failure == transformedException })
 
@@ -304,8 +293,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
         and:
         1 * buildBroadcaster.buildStarted(gradleMock)
-        1 * buildBroadcaster.projectsEvaluated(gradleMock)
-        1 * modelListenerMock.onConfigure(gradleMock)
         1 * buildBroadcaster.buildFinished({ it.failure == null }) >> { throw failure }
         1 * exceptionAnalyserMock.transform({ it instanceof MultipleBuildFailures && it.cause == failure }) >> transformedException
 
@@ -334,8 +321,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
         and:
         1 * buildBroadcaster.buildStarted(gradleMock)
-        1 * buildBroadcaster.projectsEvaluated(gradleMock)
-        1 * modelListenerMock.onConfigure(gradleMock)
         1 * exceptionAnalyserMock.transform({ it instanceof MultipleBuildFailures && it.causes == [failure, failure2] }) >> transformedException
         1 * buildBroadcaster.buildFinished({ it.failure == transformedException }) >> { throw failure3 }
         1 * exceptionAnalyserMock.transform({ it instanceof MultipleBuildFailures && it.causes == [failure, failure2, failure3] }) >> finalException
@@ -363,10 +348,8 @@ class DefaultGradleLauncherSpec extends Specification {
     }
 
     private void expectedBuildOperationsFired() {
-        assert buildOperationExecutor.operations.size() == 3
-        assert buildOperationExecutor.operations[0].displayName == "Configure build"
-        assert buildOperationExecutor.operations[1].displayName == "Notify projectsEvaluated listeners"
-        assert buildOperationExecutor.operations[2].displayName == "Run tasks"
+        assert buildOperationExecutor.operations.size() == 1
+        assert buildOperationExecutor.operations[0].displayName == "Run tasks"
     }
 
     private void isNestedBuild() {
@@ -386,8 +369,6 @@ class DefaultGradleLauncherSpec extends Specification {
 
     private void expectBuildListenerCallbacks() {
         1 * buildBroadcaster.buildStarted(gradleMock)
-        1 * buildBroadcaster.projectsEvaluated(gradleMock)
-        1 * modelListenerMock.onConfigure(gradleMock)
     }
 
     private void expectTaskGraphBuilt() {

@@ -139,11 +139,9 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
 
         DefaultGradleLauncher gradleLauncher = new DefaultGradleLauncher(
             gradle,
-            serviceRegistry.get(BuildLoader.class),
             serviceRegistry.get(BuildConfigurer.class),
             serviceRegistry.get(ExceptionAnalyser.class),
             gradle.getBuildListenerBroadcaster(),
-            listenerManager.getBroadcaster(ModelConfigurationListener.class),
             listenerManager.getBroadcaster(BuildCompletionListener.class),
             buildOperationExecutor,
             gradle.getServices().get(BuildExecuter.class),
@@ -151,7 +149,8 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
             servicesToStop,
             includedBuildControllers,
             settingsPreparer,
-            taskExecutionPreparer
+            taskExecutionPreparer,
+            gradle.getServices().get(InstantExecution.class)
         );
         nestedBuildFactory.setParent(gradleLauncher);
         nestedBuildFactory.setBuildCancellationToken(buildTreeScopeServices.get(BuildCancellationToken.class));
