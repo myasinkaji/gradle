@@ -91,10 +91,9 @@ import org.gradle.util.TestClosure
 import org.gradle.util.TestUtil
 import org.junit.Rule
 
-import java.awt.*
+import java.awt.Point
 import java.lang.reflect.Type
 import java.text.FieldPosition
-import java.util.List
 
 class DefaultProjectTest extends Specification {
 
